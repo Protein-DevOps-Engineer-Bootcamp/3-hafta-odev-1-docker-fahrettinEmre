@@ -1,0 +1,5 @@
+version: "3.9"
+services:
+  mongo:
+    image: "alpine"
+    command: echo "mongo is up"
