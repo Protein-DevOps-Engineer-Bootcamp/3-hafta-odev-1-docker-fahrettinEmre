@@ -1,6 +1,6 @@
 
 
-### 2.Hafta 1.Odev
+### 3.Hafta 1.Odev
 ---
 
 ## Table of contents[![](./docs/img/pin.svg)](#table-of-contents)
