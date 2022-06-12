@@ -7,19 +7,22 @@
 
 
 #usage message
-USAGE_MSG="
+msg="
 Usage: $(basename $0) [OPTION] <ARGUMENT> ...
 OPTIONS:    ARGUMENTS:         DESCRIPTION:              
-[-m]        <mode>             Build-deploy-template                  
-[-n]        <name>             İmage name                                   
-[-t]        <tag>              İmage Tag       
-[-r]        <registary>        For push Dockerhub or Gitlab        
-[-e]        <memory>           If this parameter is not given, it works by default. 
-[-p]        <cpu>              If this parameter is not given, it works by default.
-[-a]        <applicationname>  sql or mongo 
+[-m]        <mode>             <build-deploy-template> Exp: -m deploy              
+[-n]        <name>             İmage name Exp: -n imagename                                   
+[-t]        <tag>              İmage Tag  Exp: -t tagname
+[-r]        <registary>        For push Dockerhub or Gitlab Exp: -r dockerhub        
+[-e]        <memory>           If this parameter is not given, it works by default. Exp: -e 1g 
+[-p]        <cpu>              If this parameter is not given, it works by default. Exp: -p 1
+[-a]        <applicationname>  <sql-mongo> Exp: -a sql
 "
-
-while getopts m:n:t:r:e:p:a: flag
+help() {
+    echo "${msg}"
+    exit 1
+}
+while getopts m:n:t:r:e:p:a:h flag
 do
     case "${flag}" in
         m) mode=${OPTARG};;
@@ -29,40 +32,39 @@ do
         e) memory=${OPTARG};;
         p) cpu=${OPTARG};;
         a) applicationname=${OPTARG};;
-
-
+        h) help;;
     esac
 done
 
 
 #build mod
 if [ "$mode" = "build" ]; then             
-if [ -z "$name" ] || [ -z "$tag" ]; then  #İmagename ve imagetag kontorlü yapıyoruz. Yoksa script kırılıyor.
-echo "Name or tag can't be null !"          # Name veya tag null olamaz mesajı veriyoruz.
-exit 0                                    # script kırılıyor.                     
+if [ -z "$name" ] || [ -z "$tag" ]; then          #İmage name ve image tag kontrolü yapıyoruz. Yoksa script kırılıyor.
+echo "Name or Tag can't be null or empty!"        # Name veya tag null olamaz mesajı veriyoruz.
+exit 0                                            # script kırılıyor.                     
 fi
-docker build -t ${name}:${tag} .          #build
+docker build -t ${name}:${tag} .                  #docker build alıyoruz template bir Dockerfile ile , istenen docker file buraya eklenebilir.
 
 
 #deploy mode
 elif [ "$mode" = "deploy" ];then          
-if [ -z "$name" ] || [ -z "$tag" ]; then  #İmagename ve imagetag kontorlü yapıyoruz. Yoksa script kırılıyor.
-echo "Name or tag can't be null !"
+if [ -z "$name" ] || [ -z "$tag" ]; then         #İmage name ve image tag kontorlü yapıyoruz. Yoksa script kırılıyor.
+echo "Name or Tag can't be null or empty!"
 exit 0
 fi                                    
-if [ -z "$memory" ] && [ -z "$cpu" ]; then # Null check yapıyoruz alt satırda memory ve cpu verilmemişse limitleri vermeden çalıştırıyoruz.
-docker run ${name}:${tag}                  # İkisi birlikte verilmişse 2 limitide set ederek çalıştırıyoruz. 
+if [ -z "$memory" ] && [ -z "$cpu" ]; then        # Null check yapıyoruz ,memory ve cpu verilmemişse limitleri vermeden çalıştırıyoruz.
+docker run ${name}:${tag}                         #docker image run edilir.         
 else
-docker run -m $memory --cpus $cpu ${name}:${tag}  
+docker run -m $memory --cpus $cpu ${name}:${tag}  # İkisi birlikte verilmişse 2 limitide set ederek çalıştırıyoruz. 
 fi
-if [ -z "$registary" ];then  #registery kontrol ediyoruz.
+if [ -z "$registary" ];then                       #opsiyonel olarak registery kontrol ediyoruz. Eklenmesi durumunda hangi image registry olduğu girilmelidir..
 echo ""
 else
-docker push ${name}:${tag} # -r dockerhub veya gitlab 'a register etmek  için öncelikle login yapılmalıdır.
+docker push ${name}:${tag}                        # dockerhub veya gitlab 'a register etmek  için öncelikle login olunmalıdır.
 fi
 
 # template mod
 elif [ "$mode" = "template" ];then   
 echo $applicationname     
-docker-compose -f docker-compose-${applicationname} up #sql veya mongo servisleri ayağa kalkar.
+docker-compose -f docker-compose-${applicationname} up       #sql veya mongo servisleri ayağa kalkar.
 fi
